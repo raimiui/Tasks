@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Tasks</title>
+	<link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" />
+    <script src="https://npmcdn.com/react@15.3.0/dist/react.js"></script>
+    <script src="https://npmcdn.com/react-dom@15.3.0/dist/react-dom.js"></script>
+    <script src="https://npmcdn.com/babel-core@5.8.38/browser.min.js"></script>
+    <script src="https://npmcdn.com/jquery@3.1.0/dist/jquery.min.js"></script>
+	<script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <script src="https://npmcdn.com/remarkable@1.6.2/dist/remarkable.min.js"></script>
+  </head>
+  <body>
+    <div id="content"></div>    
+    
+    <script type="text/babel">
+        var TasksContainer = React.createClass({
+			getInitialState: function() {
+				return {tasks: []};
+          },
+		  
+		  getTasks: function() {
+			$.ajax({
+				url: this.props.url,
+				dataType: 'json',
+				cache: false,
+				success: function(data) {
+					this.setState({tasks: data});
+				}.bind(this),
+				error: function(xhr, status, error) {
+					//TODO: show error to user
+					console.error(this.props.url, status, error.toString());
+				}.bind(this)
+			});
+		  },
+		  
+		  componentDidMount: function() {
+				this.getTasks();
+		  },
+		  
+		  handleTaskSubmit: function(task) {
+			  $.ajax({
+				  url: this.props.url,
+				  dataType: 'json',
+				  type: 'post',
+				  data: task,
+				  success: function(data) {
+					  this.setState({tasks: data});
+				  }.bind(this),
+				  error: function(xhr, status, error) {
+					//TODO: show error to user
+					console.error(this.props.url, status, error.toString());
+                  }.bind(this)
+			  });
+		  },
+		  
+		  removeTask: function(id) {	
+			  $.ajax({
+				  url: this.props.url,				  
+				  type: 'delete',
+				  data: {'id': id},
+				  success: function(data) {					 
+					  this.setState({tasks: data});
+				  }.bind(this),
+				  error: function(xhr, status, error) {
+					//TODO: show error to user
+					console.error(this.props.url, status, error.toString());
+                  }.bind(this)
+			  });
+		  },
+		  
+		  render: function() {
+			  return (
+				<div className="container-fluid">
+					<h1>Tasks</h1>
+					<NewTask onTaskSubmit={this.handleTaskSubmit} />
+					<TaskList tasks={this.state.tasks} removeFromTaskList={this.removeTask}/>
+                <br />
+              </div>
+			  );
+		  }
+		});
+		
+		var NewTask = React.createClass({
+			getInitialState: function(){
+				return {taskText: ''};
+			},
+			
+			taskSubmitClicked: function(e) {
+				e.preventDefault();
+				
+				var taskText = this.state.taskText.trim();
+				if(!taskText) {
+					return;
+				}
+				this.props.onTaskSubmit({text: taskText});
+				// clear input
+				this.setState({taskText: ''});
+			},
+			
+			taskTextChanged: function(e) {
+				this.setState({taskText: e.target.value});
+			},
+			
+			render: function() {
+				return (
+					<div className='form-inline'>
+						<input type='text' className='form-control' placeholder='Enter task' onChange={this.taskTextChanged} value={this.state.taskText}/>
+						<input id='newTaskBtn' style={{marginLeft: 3}} type='submit' className='form-control btn btn-success' onClick={this.taskSubmitClicked} value='Enter' />
+					</div>					
+				);
+			}
+		});
+		
+		var TaskList = new React.createClass({
+			
+			removeTask: function(e) {
+				// if done - remove from the list
+				if(e.target.checked) {
+					this.props.removeFromTaskList(e.target.id)
+				}
+			},
+			
+			render: function() {
+				var that = this;
+				var tasksNodes = this.props.tasks.map(function(task) {
+					return (<Task key={task.id} id={task.id} isDone={task.isDone} text={task.text} onDone={that.removeTask} />);
+				});
+				
+				return (
+					<div className='taskList'>
+						{tasksNodes}
+					</div>
+				);
+			}
+		});
+		
+		var Task = new React.createClass({
+			getInitialState: function(){
+				return {isDone: this.props.isDone};
+			},
+			
+			render: function() {
+				return (
+					<div>
+						<input type='checkbox' id={this.props.id} value={this.state.isDone} onChange={this.props.onDone} />
+						<label style={{marginLeft: 5}}>{this.props.text}</label>						
+					</div>
+				);
+			}
+		});
+		
+		ReactDOM.render(<TasksContainer url='/api/tasks' />, document.getElementById('content'));
+        
+    </script>
+  </body>
+</html>
