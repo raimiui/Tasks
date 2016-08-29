@@ -2,14 +2,14 @@
 Tasks web app made using node.js and react.js
 
 Created in 2.5 days. Including research.
+Deployed to https://tasks2.herokuapp.com/
 
-Prerequisite: Node should be installed
-
-Running: From terminal/command line run:
+Running locally:
+- Prerequisite: Node should be installed
+- From terminal/command line run:
 1) npm install
 2) node server.js
-
-Open http://localhost:3000/
+- Open http://localhost:3000/
 
 
 TODO:
